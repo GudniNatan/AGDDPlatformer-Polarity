@@ -126,8 +126,8 @@ namespace AGDDPlatformer
             {
                 player.ResetPlayer();
             }
-            timeStopped = false;
             GameObject.Find("LevelObjects").BroadcastMessage("Reset", SendMessageOptions.DontRequireReceiver);
+            timeStopped = false;
         }
 
         public static void StopTime(float time)

@@ -29,6 +29,10 @@ public class ToggleBox : MonoBehaviour
         outline.color = color;
     }
 
+    void Reset() {
+        Start();
+    }
+
     void HighFive()
     {
         subBox.gameObject.SetActive(!subBox.gameObject.activeSelf);

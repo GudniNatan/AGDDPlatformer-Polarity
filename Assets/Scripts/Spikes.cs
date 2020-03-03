@@ -42,9 +42,9 @@ public class Spikes : MonoBehaviour
 
     IEnumerator Blink(PlayerController player) {
         SpriteRenderer p = player.GetComponentInChildren<SpriteRenderer>();
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 40; i++)
         {
-            yield return new WaitForEndOfFrame();
+            yield return new WaitForSeconds(1f/50f);
             p.enabled = !p.enabled;
         }
         p.enabled = true;

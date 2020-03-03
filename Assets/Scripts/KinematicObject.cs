@@ -63,6 +63,20 @@ namespace AGDDPlatformer
             PerformMovement(airMove, true);
 
             wasGrounded = isGrounded;
+            if (isGrounded)
+            {
+                //do friction
+                if (body.sharedMaterial != null)
+                    velocity /= 1 + (body.sharedMaterial.friction * Time.deltaTime);
+            }
+            else
+            {
+                //do air friction
+                float y = velocity.y;
+                if (body.sharedMaterial != null)
+                    velocity /= 1 + (body.sharedMaterial.friction * Time.deltaTime * 0.5f);
+                velocity.y = y;
+            }
         }
 
         void PerformMovement(Vector2 move, bool yMovement)
@@ -76,6 +90,17 @@ namespace AGDDPlatformer
                 for (int i = 0; i < count; i++)
                 {
                     Vector2 currentNormal = hitBuffer[i].normal;
+
+                    if (wasGrounded &&
+                        !yMovement &&
+                        hitBuffer[i].transform.tag == "Pushable" &&
+                        velocity.y * Math.Sign(gravityModifier) <= 0)
+                    {
+                        //Push other object
+                        KinematicObject other = hitBuffer[i].transform.GetComponent<KinematicObject>();
+                        velocity /= 2;
+                        other.velocity += velocity * Math.Sign(gravityModifier);
+                    }
 
                     //is this surface flat enough to land on?
                     if ((gravityModifier >= 0 && currentNormal.y > minGroundNormalY) ||
@@ -118,14 +143,6 @@ namespace AGDDPlatformer
                         {
                             velocity.x = 0;
                         }
-                    }
-
-                    if (wasGrounded && !yMovement && hitBuffer[i].transform.tag == "Pushable" && velocity.y <= 0)
-                    {
-                        // pushing = true;
-                        // distance *= 2;
-                        // velocity.y += 100;
-                        continue;
                     }
 
                     //remove shellDistance from actual move distance.

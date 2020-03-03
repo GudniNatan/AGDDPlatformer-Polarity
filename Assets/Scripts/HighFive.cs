@@ -59,7 +59,7 @@ namespace AGDDPlatformer
 
             foreach (var reciever in receivers)
             {
-                reciever.Invoke("HighFive", 0.1f);
+                reciever.Invoke("HighFive", 0.2f);
             }
         }
 
