@@ -25,6 +25,7 @@ public class Pushable : MonoBehaviour
         rigidbody = GetComponent<Rigidbody2D>();
         kinematicObject = GetComponent<KinematicObject>();
         source = GetComponent<AudioSource>();
+        source.pitch = Random.Range(0.8f, 1.2f);
     }
 
     void Reset()

@@ -27,6 +27,10 @@ namespace AGDDPlatformer
 
         protected bool pushing;
 
+        protected GameObject on; //if grounded, then this is the gameObject this is on top of
+
+        private Transform originalParent;
+
         protected void OnEnable()
         {
             body = GetComponent<Rigidbody2D>();
@@ -43,6 +47,7 @@ namespace AGDDPlatformer
             contactFilter.useTriggers = false;
             contactFilter.SetLayerMask(Physics2D.GetLayerCollisionMask(gameObject.layer));
             contactFilter.useLayerMask = true;
+            originalParent = transform.parent;
         }
 
         protected void FixedUpdate()
@@ -53,21 +58,38 @@ namespace AGDDPlatformer
             velocity += gravityModifier * Physics2D.gravity * Time.deltaTime;
 
             isGrounded = false;
+            on = null;
 
             Vector2 deltaPosition = velocity * Time.deltaTime;
             Vector2 groundVector = new Vector2(groundNormal.y, -groundNormal.x);
             Vector2 groundMove = groundVector * deltaPosition.x;
-            PerformMovement(groundMove, false);
+            Vector2 xmove = PerformMovement(groundMove, false);
 
             Vector2 airMove = Vector2.up * deltaPosition.y;
-            PerformMovement(airMove, true);
+            Vector2 ymove = PerformMovement(airMove, true);
+            body.MovePosition(body.position + xmove + ymove);
 
             wasGrounded = isGrounded;
             if (isGrounded)
             {
-                //do friction
-                if (body.sharedMaterial != null)
+                if (body.sharedMaterial != null)  //do friction
                     velocity /= 1 + (body.sharedMaterial.friction * Time.deltaTime);
+
+                // if on top of other kinematic object, and that object is moving then share velocity
+                var kinOn = on.GetComponent<KinematicObject>();
+                if (kinOn != null)
+                {
+                    if (kinOn.tag != "Player1" && kinOn.tag != "Player2" && tag != "Player1" && tag != "Player2")
+                    {
+                        // Vector2 move = PerformMovement(kinOn.velocity * Time.deltaTime, false);
+                        if (transform.parent != on.transform)
+                        {
+                            transform.parent = on.transform;
+                        }
+                    }
+                } else {
+                    transform.parent = originalParent;
+                }
             }
             else
             {
@@ -77,9 +99,10 @@ namespace AGDDPlatformer
                     velocity /= 1 + (body.sharedMaterial.friction * Time.deltaTime * 0.5f);
                 velocity.y = y;
             }
+
         }
 
-        void PerformMovement(Vector2 move, bool yMovement)
+        Vector2 PerformMovement(Vector2 move, bool yMovement)
         {
             float distance = move.magnitude;
 
@@ -98,8 +121,9 @@ namespace AGDDPlatformer
                     {
                         //Push other object
                         KinematicObject other = hitBuffer[i].transform.GetComponent<KinematicObject>();
-                        velocity /= 2;
                         other.velocity += velocity * Math.Sign(gravityModifier);
+                        velocity /= 2;
+                        return new Vector2(0, 0);
                     }
 
                     //is this surface flat enough to land on?
@@ -107,6 +131,7 @@ namespace AGDDPlatformer
                         (gravityModifier < 0 && currentNormal.y < -minGroundNormalY))
                     {
                         isGrounded = true;
+                        on = hitBuffer[i].transform.gameObject;
                         // if moving up, change the groundNormal to new surface normal.
                         if (yMovement)
                         {
@@ -150,8 +175,11 @@ namespace AGDDPlatformer
                     distance = modifiedDistance < distance ? modifiedDistance : distance;
                 }
             }
-
-            body.position += move.normalized * distance;
+            // Vector2 pos = body.position + move.normalized * distance;
+            //body.MovePosition(pos);
+            // body.position = pos;
+            // body.position += move.normalized * distance;
+            return move.normalized * distance;
         }
     }
 }
